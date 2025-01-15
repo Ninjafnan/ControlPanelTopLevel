@@ -24,6 +24,7 @@ public:
      * this means that whislst the motors mirror eachother
      * if both directions are set to 0 they will move in the same direction
      * as opposed to e.g a normal MotorADir = 0 and MotorBDir = 1 values resulting in a "forward" direction
+     * No longer true due to having to switch out motors
      *
      * @param MotorAPWM Pin for motor A PWM speed control
      * @param MotorBPWM Pin for motor B PWM speed control
@@ -114,7 +115,7 @@ public:
     /**
      * @param xCoordMode, yCoordMode will only ever have the values 0, 1 and -1 indicates the multiplicative value to times when adding to map
      */
-    int xCoordMode = 1;
+    int xCoordMode = -1;
     int yCoordMode = 0;
 
     /**
