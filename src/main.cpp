@@ -1,5 +1,17 @@
-
-
+ 
+ /*
+  _                           _____       _   _ 
+ | |              /\         |_   _|     | \ | |
+ | |             /  \          | |       |  \| |
+ | |            / /\ \         | |       | . ` |
+ | |____   _   / ____ \   _   _| |_   _  | |\  |
+ |______| (_) /_/    \_\ (_) |_____| (_) |_| \_|
+*/                                                
+//                                                                  
+// Left wall. Autonomous. intelligent, navigator
+//
+//ASCII ART generator from https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20
+//
 #include <Arduino.h>
 #include <Infrared.h>
 #include <Motor.h>
