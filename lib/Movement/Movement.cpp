@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Motor.h>
+#include <Movement.h>>
 
 // initialise encoder pins
 InterruptIn EncA(P1_11);
@@ -14,41 +14,41 @@ void beginTimeout(float time) {
     timeout.attach(&onTimeout, time);
 }
 
-Motor::Motor(PinName MotorADir, PinName MotorBDir, PinName MotorAPWM, PinName MotorBPWM)
+Movement::Movement(PinName MotorADir, PinName MotorBDir, PinName MotorAPWM, PinName MotorBPWM)
     : MotorADir(MotorADir), MotorBDir(MotorBDir), MotorAPWM(MotorAPWM), MotorBPWM(MotorBPWM) {}
 
-void Motor::moveMotors(int directionA, float speedA, int directionB, float speedB) {
+void Movement::moveMotors(int directionA, float speedA, int directionB, float speedB) {
     MotorADir = directionA;
     MotorAPWM.write(speedA);
     MotorBDir = directionB;
     MotorBPWM.write(speedB);
 }
 
-void Motor::bothMotorSetup() {
+void Movement::bothMotorSetup() {
     MotorAPWM.period_ms(1);
     MotorBPWM.period_ms(1);
 }
 
-void Motor::motorStop() {
+void Movement::motorStop() {
     MotorAPWM.write(0);
     MotorBPWM.write(0);
 }
 
-void Motor::revolutionsA() {
+void Movement::revolutionsA() {
     if (EncCountA % 6 == 0) {
         if (EncCountA % 110 == 0) {
             ShaftRevA++;
         }
     }
 }
-void Motor::revolutionsB() {
+void Movement::revolutionsB() {
     if (EncCountB % 6 == 0) {
         if (EncCountB % 110 == 0) {
             ShaftRevB++;
         }
     }
 }
-void Motor::countPulseA() {
+void Movement::countPulseA() {
     if (MotorADir == 0) {
         EncCountA++;
     } else {
@@ -56,7 +56,7 @@ void Motor::countPulseA() {
     }
     revolutionsA();
 }
-void Motor::countPulseB() {
+void Movement::countPulseB() {
     if (MotorBDir == 0) {
         EncCountB++;
     } else {
@@ -65,7 +65,7 @@ void Motor::countPulseB() {
     revolutionsB();
 }
 
-void Motor::rampSpeed(float targetSpeed, int type) {
+void Movement::rampSpeed(float targetSpeed, int type) {
     const float RAMP_FACTOR = 0.0005;
     float currentSpeed = 0.00000; // initialises the starting to speed to be 0
     int wantedDirA;
@@ -94,8 +94,8 @@ void Motor::rampSpeed(float targetSpeed, int type) {
         currentSpeed = currentSpeed + RAMP_FACTOR;
         moveMotors(wantedDirA, currentSpeed, wantedDirB, currentSpeed);
         Serial.println((String) "Current speed: " + currentSpeed + " Loop: " + timer);
-        EncA.rise(callback(this, &Motor::countPulseA));
-        EncB.rise(callback(this, &Motor::countPulseB));
+        EncA.rise(callback(this, &Movement::countPulseA));
+        EncB.rise(callback(this, &Movement::countPulseB));
         // Serial.println((String) "EncoderA:" + EncCountA + " Revolutions A:" + ShaftRevA + " EncoderB:" + EncCountB + " Revolutions B:" + ShaftRevB + " Timer: " + timer);
         timer++;
         // below checks are there to ensure the motors don't desync
@@ -118,7 +118,7 @@ void Motor::rampSpeed(float targetSpeed, int type) {
     motorStop(); // stops motors
 }
 
-void Motor::move(int mili) {
+void Movement::move(int mili) {
     int wantedDirA = 1;
     int wantedDirB = 0;
     tempMili = mili; // stores parameter to be stored in movement history for playback
@@ -141,8 +141,8 @@ void Motor::move(int mili) {
     EncCountB = 0;
 
     while ((abs(EncCountA) < abs(TargetEncVal)) || (abs(EncCountB) < abs(TargetEncVal))) {
-        EncA.rise(callback(this, &Motor::countPulseA));
-        EncB.rise(callback(this, &Motor::countPulseB));
+        EncA.rise(callback(this, &Movement::countPulseA));
+        EncB.rise(callback(this, &Movement::countPulseB));
         // Serial.println((String) "EncoderA:" + EncCountA + " Revolutions A:" + ShaftRevA + " EncoderB:" + EncCountB + " Revolutions B:" + ShaftRevB + " Timer: " + timer);
         timer++;
         if (abs(EncCountA) < abs(EncCountB)) {
@@ -172,7 +172,7 @@ void Motor::move(int mili) {
     }
 }
 
-void Motor::checkOrientation() {
+void Movement::checkOrientation() {
     switch (currentAngle) {
     case (0): // facing north/forwards towards the end
         yCoordMode = 1;
@@ -193,7 +193,7 @@ void Motor::checkOrientation() {
     }
     Serial.println((String) " xCoordMode: " + xCoordMode + " yCoordMode: " + yCoordMode);
 }
-void Motor::updateCoords() {
+void Movement::updateCoords() {
     currentXCoord = currentXCoord + (tempMili * xCoordMode);
     currentYCoord = currentYCoord + (tempMili * yCoordMode);
     Serial.println((String) "xCoordMode: " + xCoordMode + " yCoordMode: " + yCoordMode + " xCoord: " + currentXCoord + " yCoord: " + currentYCoord);
@@ -205,7 +205,7 @@ void Motor::updateCoords() {
     }
 }
 
-void Motor::storeMovements() {
+void Movement::storeMovements() {
     // creates struct to store each pair of movement options
     aMove movement;
     movement.action = action; // stores either turn or move passed set by their respective functions before this is called
@@ -223,7 +223,7 @@ void Motor::storeMovements() {
     }
 }
 
-void Motor::optimiseMovements() {
+void Movement::optimiseMovements() {
     // not fully functional at time of submission but kept to complete later and for the attempt
     int tempVal;
     aMove optimisedMovement; // creates new struct to store the optimised movement
@@ -267,7 +267,7 @@ void Motor::optimiseMovements() {
 // curently works, would be attempted to be playbacking the optimised movements instead of simply history
 // in reverse if i had gotten that to work therefore this function may also have to move to main to allow for wall alignment
 
-void Motor::playbackMovements() {
+void Movement::playbackMovements() {
     Exploring = false; // stops robot from attempting to explore anymore
     turnAround();      // makes it turn around to face the start
     // loop goes through each section of the array and plays back the stored movements in reverse to make it back
@@ -284,7 +284,7 @@ void Motor::playbackMovements() {
     }
 }
 
-void Motor::turnAngle(int angle) {
+void Movement::turnAngle(int angle) {
     int wantedDirA = 1;
     int wantedDirB = 0;
     float defaultSpeed = 0.5;
@@ -312,8 +312,8 @@ void Motor::turnAngle(int angle) {
         wantedDirB = 0;
     }
 
-    EncA.rise(callback(this, &Motor::countPulseA));
-    EncB.rise(callback(this, &Motor::countPulseB));
+    EncA.rise(callback(this, &Movement::countPulseA));
+    EncB.rise(callback(this, &Movement::countPulseB));
     beginTimeout(5); // starts a timeout timer to stop movement attempt where it has failed
                      // should in theory be impossible due to circular design but here for
     //  Serial.println((String) "EncoderA:" + EncCountA + " Revolutions A:" + ShaftRevA + " EncoderB:" + EncCountB + " Revolutions B:" + ShaftRevB + " Timer: " + timer);
@@ -329,8 +329,8 @@ void Motor::turnAngle(int angle) {
                                                                                  // absolute values used so it doesn't matter which way the motors are turning
     while ((abs(EncCountA) < abs(TargetEncVal)) || (abs(-EncCountB) < abs(TargetEncVal))) {
 
-        EncA.rise(callback(this, &Motor::countPulseA));
-        EncB.rise(callback(this, &Motor::countPulseB));
+        EncA.rise(callback(this, &Movement::countPulseA));
+        EncB.rise(callback(this, &Movement::countPulseB));
         // Serial.println((String) "EncoderA:" + EncCountA + " Revolutions A:" + ShaftRevA + " EncoderB:" + EncCountB + " Revolutions B:" + ShaftRevB + " target Enc:" + TargetEncVal + " Timer: " + timer);
         timer++;
         // syncs up encoders by momentarilly turning 1 of them off if the other goes ahead to ensure it spins on the spot
@@ -382,12 +382,12 @@ void Motor::turnAngle(int angle) {
     }
 }
 
-void Motor::turnLeft() {
+void Movement::turnLeft() {
     turnAngle(-90);
 }
-void Motor::turnRight() {
+void Movement::turnRight() {
     turnAngle(90);
 }
-void Motor::turnAround() {
+void Movement::turnAround() {
     turnAngle(180);
 }

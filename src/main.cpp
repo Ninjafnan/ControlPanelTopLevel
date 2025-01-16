@@ -14,12 +14,12 @@
 //
 #include <Arduino.h>
 #include <Infrared.h>
-#include <Motor.h>
+#include <Movement.h>
 #include <Ultrasonic.h>
 
 Ultrasonic uSonic;
 Infrared IR;
-Motor motors(P0_4, P0_5, P0_27, P1_2);
+Movement motors(P0_4, P0_5, P0_27, P1_2);
 
 //Timeout function exists to prevent robot from getting stuck in a move it can't complete
 Timeout timeout_main;

@@ -5,14 +5,14 @@
  * the 2nd section is a coordinate system and movement history section to 
  */
 
-#ifndef MOTOR_H
-#define MOTOR_H
+#ifndef MOVEMENT_H
+#define MOVEMENT_H
 #include <Arduino.h>
 #include <mbed.h>
 using namespace mbed;
 #pragma once
 
-class Motor {
+class Movement {
 
 public:
     /**
@@ -29,7 +29,7 @@ public:
      * @param MotorAPWM Pin for motor A PWM speed control
      * @param MotorBPWM Pin for motor B PWM speed control
      */
-    Motor(PinName MotorADir, PinName MotorBDir, PinName MotorAPWM,
+    Movement(PinName MotorADir, PinName MotorBDir, PinName MotorAPWM,
           PinName MotorBPWM);
 
     /**
