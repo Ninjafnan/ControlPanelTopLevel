@@ -19,7 +19,7 @@
 
 Ultrasonic uSonic;
 Infrared IR;
-Movement motors(P0_4, P0_5, P0_27, P1_2);
+Movement movement(P0_4, P0_5, P0_27, P1_2);
 
 //Timeout function exists to prevent robot from getting stuck in a move it can't complete
 Timeout timeout_main;
@@ -29,6 +29,7 @@ void beginTimeoutMain(float time_main) {
     timeout_main.detach();
     timeout_main.attach(&onTimeoutMain, time_main);
 }
+
 
 
 /**
@@ -53,12 +54,12 @@ void wallAlign(int mode) {
                 if (frontLeft == backLeft) { // if these are equal toeachother then wall has been aligned too so exit the loop
                     break;
                 }
-                if (frontLeft > backLeft + LEEWAY) { // if frontleft is sensor is further away from the wall than backleft,
+                if (frontLeft > backLeft /*+ LEEWAY */) { // if frontleft is sensor is further away from the wall than backleft,
                                                      // robot slowly turns anticlockwise/left to allign itself with the wall
-                    motors.turnAngle(-1);
-                } else if (backLeft > frontLeft + LEEWAY) { // opposite of above, if backleft is further away then robot turns
+                    movement.turnAngle(-1);
+                } else if (backLeft > frontLeft /*+ LEEWAY */) { // opposite of above, if backleft is further away then robot turns
                                                             // right/clockwise to allign itself with the wall
-                    motors.turnAngle(1);
+                    movement.turnAngle(1);
                 }
                 if (timeout_main_occurred) {
                     // robot has gotten stuck and so the movement has been forcefully terminated
@@ -77,9 +78,9 @@ void wallAlign(int mode) {
                     break;
                 }
                 if (frontRight > backRight + LEEWAY) {
-                    motors.turnAngle(1);
+                    movement.turnAngle(1);
                 } else if (backRight > frontRight + LEEWAY) {
-                    motors.turnAngle(-1);
+                    movement.turnAngle(-1);
                 }
                 if (timeout_main_occurred) {
                     // robot has gotten stuck and so the movement has been forcefully terminated
@@ -89,13 +90,32 @@ void wallAlign(int mode) {
             }
         }
     }
-    motors.motorStop(); // stops both motors after sensors are equal eachother
+    movement.motorStop(); // stops both motors after sensors are equal eachother
+}
+
+void checkWallAlign(){
+    float distanceLeftFront = IR.IRSensor(1);
+    float distanceLeftBack = IR.IRSensor(3);
+    float distanceRightFront = IR.IRSensor(0);
+    float distanceRightBack = IR.IRSensor(2);
+
+    const float SIGNIFICANT_ERROR = 20;
+
+    if (distanceLeftFront < distanceRightFront && (abs(distanceLeftFront - distanceLeftBack) < SIGNIFICANT_ERROR &&
+                                                   distanceLeftFront < SIGNIFICANT_ERROR && distanceLeftBack < SIGNIFICANT_ERROR)) {
+        // if left side is closer AND if left side doesn't have too large of a difference.
+        wallAlign(1);
+    } else if (distanceLeftFront > distanceRightFront && (abs(distanceRightFront - distanceRightBack) < SIGNIFICANT_ERROR &&
+                                                          distanceRightFront < SIGNIFICANT_ERROR && distanceRightBack < SIGNIFICANT_ERROR)) {
+        // if right side is closer AND if right side doesn't have too large of a difference.
+        wallAlign(0);
+    }
 }
 
 void setup() {
     // put your setup code here, to run once:
     Serial.begin(9600);
-    motors.bothMotorSetup();
+    movement.bothMotorSetup();
     // initialises and writes to the R,G,B LED pins on the ardunino board
     digitalWrite(LEDG, LOW);  // have the green LED be the only one that's low/on
     digitalWrite(LEDB, HIGH); // have the blue and red LED be off/high
@@ -120,56 +140,57 @@ void explore() {
         frontRightClear = !(frontRight < IR_TOO_CLOSE);
         backRightClear = !(backRight < IR_TOO_CLOSE);
 
-        if ((motors.yCoordMode == 1) && (distanceFront > 10)) {
+        if ((movement.yCoordMode == 1) && (distanceFront > 10)) {
             // checks if there is space ahead and that robot is facing goal if both are true then it goes forward
-            motors.move(10);
+            movement.move(5);
+            checkWallAlign();
             return;
         }
         if (!frontClear) {
-            // nothing in front after so move forward
-            motors.move(-7);
+            // checks if front is clear, it isn't so move backwards as too close to wall
+            movement.move(-7);
         } else {
             if (frontLeftClear && backLeftClear) {
                 // nothing on the left so turn left
-                if (motors.currentXCoord > 10) { // checks if motor is on the far left hand side of the maze if it is then prevents left turn
-                    motors.turnLeft();
+                if (movement.currentXCoord > 10) { // checks if motor is on the far left hand side of the maze if it is then prevents left turn
+                    movement.turnLeft();
                     wallAlign(0); // wall aligns with left sensors
-                    motors.move(25);
+                    movement.move(25);
                 } else {
-                    motors.turnRight();
+                    movement.turnRight();
                     wallAlign(1); // wall aligns with right sensors
                 }
                 if (uSonic.uSonicSensor() > 15) {
                     // nothing in front after turning so move forward
-                    motors.move(10);
+                    movement.move(10);
                 }
             } else if ((frontLeftClear && !backLeftClear) || (!frontLeftClear && backLeftClear)) {
                 // Robot is about to clear a wall as one sensor has past it, move forward
                 // larger movement to account for slight wheel turning failure and to ensure all the robot is clear
-                motors.move(20);
+                movement.move(20);
 
             } else {
                 // Blocked on left
                 // Check if the front is clear enough to move forward
                 if (distanceFront > 15) {
                     // checks again if some movement can be made
-                    motors.move(5);
+                    movement.move(5);
                 } else {
                     if (frontRightClear && backRightClear) {
                         // as left turn hasn't worked try turning right
-                        motors.turnRight();
+                        movement.turnRight();
                         wallAlign(1);
                         if (uSonic.uSonicSensor() > 10) {
                             // after turning right if there is space ahead go forward
-                            motors.move(7);
+                            movement.move(5);
                         }
                     } else if (frontRightClear && !backRightClear) {
                         // Robot is about to clear a wall as one sensor has past it, move forward
                         // larger movement to account for slight wheel turning failure and to ensure all the robot is clear
-                        motors.move(20);
+                        movement.move(20);
                     } else {
                         // robot's only movement option is go backwards on it's self
-                        motors.turnAround();
+                        movement.turnAround();
                         wallAlign(1);
                     }
                 }
@@ -181,4 +202,21 @@ void explore() {
 }
 void loop() {
     explore();
+    // movement.turnRight();
+    // delay(100);
+    // movement.turnLeft();
+    // movement.move(5);
+    // delay(100);
+    // movement.move(5);
+    // delay(100);
+    // movement.turnRight();
+    // delay(100);
+    // //movement.move(5);
+    // delay(100);
+    // movement.Exploring = false;
+    // delay(100);
+    // movement.playbackMovements();
+    // delay(10000);
+
+
 }

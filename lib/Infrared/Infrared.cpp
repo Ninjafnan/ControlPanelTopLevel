@@ -17,10 +17,10 @@ float Infrared::IRSensor(char SensorNo) {
     temp = ((cmd[0] << 4) + cmd[1]);                 // formula from sensor datasheet to take raw data and makes them useful
     sensedValue = static_cast<float>(temp) / 16 / 4; // converts value into the actual distance desired in CM
 
-    Serial.print(SensorNo, HEX);
-    Serial.print(" ");
-    Serial.print(sensedValue);
-    Serial.print(" cm \n ");
+    //Serial.print(SensorNo, HEX);
+    //Serial.print(" ");
+    //Serial.print(sensedValue);
+    //Serial.print(" cm \n ");
 
     return sensedValue;
 }

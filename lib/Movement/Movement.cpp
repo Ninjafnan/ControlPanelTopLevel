@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Movement.h>>
+#include <Movement.h>
 
 // initialise encoder pins
 InterruptIn EncA(P1_11);
@@ -164,9 +164,9 @@ void Movement::move(int mili) {
     motorStop();
     updateCoords();
     tempAngle = 0; // sets angle to nothing to ensure only movement is stored
-    action = MOVE; //sets action to move for movement storage purposes
+    action = MOVE; // sets action to move for movement storage purposes
     storeMovements();
-    if (Exploring == false) { //only occoures on playbackmovements as no delay caused issues
+    if (Exploring == false) { // only occoures on playbackmovements as no delay caused issues
         Serial.println("delay from explore false starts now");
         delay(1000);
     }
@@ -194,10 +194,10 @@ void Movement::checkOrientation() {
     Serial.println((String) " xCoordMode: " + xCoordMode + " yCoordMode: " + yCoordMode);
 }
 void Movement::updateCoords() {
-    currentXCoord = currentXCoord + (tempMili * xCoordMode);
-    currentYCoord = currentYCoord + (tempMili * yCoordMode);
+    currentXCoord = currentXCoord + (tempMili * xCoordMode * SCALE_FACTOR);
+    currentYCoord = currentYCoord + (tempMili * yCoordMode * SCALE_FACTOR);
     Serial.println((String) "xCoordMode: " + xCoordMode + " yCoordMode: " + yCoordMode + " xCoord: " + currentXCoord + " yCoord: " + currentYCoord);
-    if (currentYCoord > 1900) {   // robot would have reached the end
+    if (currentYCoord > 1630) {   // robot would have reached the end
         digitalWrite(LEDG, HIGH); // turn off green LED
         digitalWrite(LEDB, LOW);  // turn on Blue LED to indicate it's time to go back through the maze using array of stored moves
         Exploring = false;
@@ -210,11 +210,15 @@ void Movement::storeMovements() {
     aMove movement;
     movement.action = action; // stores either turn or move passed set by their respective functions before this is called
 
-    if (Exploring == true) {            // checks if robot is still exploring if it is it goes ahead with storing
-        if (tempMili == 0) {            // checks that move ISN'T being stored
+    if (Exploring == true) { // checks if robot is still exploring if it is it goes ahead with storing
+        if (tempMili == 0) { // checks that move ISN'T being stored
+            if (abs(tempAngle) == 1) { //if the angle is 1 then it's wallaligning and should therefore be ignored
+                return;
+            }
             movement.value = tempAngle; // stores angle value
-        } else if (tempAngle == 0) {    // checks that turn ISN'T being stored
-            movement.value = tempMili;  // stores movement value
+
+        } else if (tempAngle == 0) {   // checks that turn ISN'T being stored
+            movement.value = tempMili; // stores movement value
         }
         history[historyCounter] = movement; // stores the struct in an array and increments it
         historyCounter++;
@@ -270,6 +274,7 @@ void Movement::optimiseMovements() {
 void Movement::playbackMovements() {
     Exploring = false; // stops robot from attempting to explore anymore
     turnAround();      // makes it turn around to face the start
+    move(3);
     // loop goes through each section of the array and plays back the stored movements in reverse to make it back
 
     for (int i = historyCounter - 1; i >= 0; i--) {
@@ -358,7 +363,7 @@ void Movement::turnAngle(int angle) {
     } else if (defaultSpeed == 0.5) {
         motorStop();
     }
-    if (abs(angle) != 1) { 
+    if (abs(angle) != 1) {
         // does the same thing as the angle optimisation above but this is done for the compass orientation
         // so wants to make sure it's not being called when wall Alignment is using this function
         currentAngle = currentAngle + angle;
@@ -373,10 +378,10 @@ void Movement::turnAngle(int angle) {
     Serial.println((String) "current angle: " + currentAngle);
     checkOrientation();
     tempAngle = -angle; // stores the negative of the inputted angle as when reversing the movements you'd want to want to reverse the turn too
-    tempMili = 0; //ensures temp mili is 0 so correct value of movement is stored
-    action = TURN; //sets action to turn for movement storage purposes
+    tempMili = 0;       // ensures temp mili is 0 so correct value of movement is stored
+    action = TURN;      // sets action to turn for movement storage purposes
     storeMovements();
-    if (Exploring == false) { //only occoures on playbackmovements as no delay caused issues
+    if (Exploring == false) { // only occoures on playbackmovements as no delay caused issues
         Serial.println("delay from explore false starts now");
         delay(1000);
     }
